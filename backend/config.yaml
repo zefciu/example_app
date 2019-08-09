@@ -1,0 +1,3 @@
+---
+db_connection: postgresql+psycopg2:///example_app
+frontend_app: http://127.0.0.1:5000/
