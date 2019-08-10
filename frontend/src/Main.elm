@@ -1,6 +1,8 @@
 module Main exposing (main)
 
+import Bootstrap.Button as Button
 import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
 import Bootstrap.Table as Table
 import Browser
 import Browser.Navigation as Nav
@@ -36,8 +38,9 @@ init serverUrl url key =
       , url = url
       , gridData = Loading
       , serverUrl = serverUrl
+      , lastPagination = Initial
       }
-    , loadGrid serverUrl
+    , loadGrid Nothing Initial serverUrl
     )
 
 
@@ -60,50 +63,101 @@ update msg model =
             , Cmd.none
             )
 
+        PreviousPage ->
+            case model.gridData of
+                Loaded (Just data) ->
+                    ( { model | gridData = Loading, lastPagination = Left }
+                    , loadGrid (Just data.pageInfo) Left model.serverUrl
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        NextPage ->
+            case model.gridData of
+                Loaded (Just data) ->
+                    ( { model | gridData = Loading, lastPagination = Right }
+                    , loadGrid (Just data.pageInfo) Right model.serverUrl
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 view : Model -> Browser.Document Msg
 view model =
     { title = "Example App"
     , body =
-        case model.gridData of
-            Loading ->
-                [ Html.text "..." ]
+        [ Grid.container []
+            [ Grid.row []
+                [ Grid.col []
+                    (case model.gridData of
+                        Loading ->
+                            [ Html.text "..." ]
 
-            Errored ->
-                [ Html.text "!" ]
+                        Errored ->
+                            [ Html.text "!" ]
 
-            Loaded (Just page) ->
-                [ viewPage page ]
+                        Loaded (Just page) ->
+                            [ viewGrid page ]
 
-            Loaded Nothing ->
-                [ Html.text "---" ]
-    }
-
-
-viewPage : GridDataResponse -> Html.Html msg
-viewPage data =
-    Grid.container []
-        [ Grid.row []
-            [ Grid.col []
-                [ Table.simpleTable
-                    ( Table.simpleThead
-                        [ Table.th [] [ Html.text "First name" ]
-                        , Table.th [] [ Html.text "Second name" ]
-                        ]
-                    , Table.tbody []
-                        (List.map
-                            (\row ->
-                                Table.tr []
-                                    [ Table.td [] [ Html.text row.firstName ]
-                                    , Table.td [] [ Html.text row.lastName ]
-                                    ]
-                            )
-                            data.persons
-                        )
+                        Loaded Nothing ->
+                            [ Html.text "---" ]
                     )
+                ]
+            , Grid.row []
+                [ Grid.col []
+                    (viewNavigation model)
                 ]
             ]
         ]
+    }
+
+
+viewGrid : GridDataResponse -> Html.Html msg
+viewGrid data =
+    Table.simpleTable
+        ( Table.simpleThead
+            [ Table.th [] [ Html.text "First name" ]
+            , Table.th [] [ Html.text "Second name" ]
+            ]
+        , Table.tbody []
+            (List.map
+                (\row ->
+                    Table.tr []
+                        [ Table.td [] [ Html.text row.firstName ]
+                        , Table.td [] [ Html.text row.lastName ]
+                        ]
+                )
+                data.persons
+            )
+        )
+
+
+viewNavigation : Model -> List (Html.Html Msg)
+viewNavigation model =
+    case model.gridData of
+        Loaded (Just data) ->
+            [ Button.button
+                [ Button.disabled (not (data.pageInfo.hasPreviousPage || model.lastPagination == Right))
+                , Button.onClick PreviousPage
+                ]
+                [ Html.text "Poprzednia strona" ]
+            , Button.button
+                [ Button.disabled (not (data.pageInfo.hasNextPage || model.lastPagination == Left))
+                , Button.onClick NextPage
+                ]
+                [ Html.text "Następna strona" ]
+            ]
+
+        _ ->
+            [ Button.button
+                [ Button.disabled True
+                ]
+                [ Html.text "Poprzednia strona"
+                ]
+            , Button.button [ Button.disabled True ] [ Html.text "Następna strona" ]
+            ]
 
 
 type GridData
@@ -132,13 +186,19 @@ gridDataResponse =
 
 
 type alias PageInfo =
-    { endCursor : Maybe String
+    { hasNextPage : Bool
+    , hasPreviousPage : Bool
+    , startCursor : Maybe String
+    , endCursor : Maybe String
     }
 
 
 pageInfo : SelectionSet PageInfo Schema.Object.PageInfo
 pageInfo =
     Graphql.SelectionSet.succeed PageInfo
+        |> with Schema.Object.PageInfo.hasNextPage
+        |> with Schema.Object.PageInfo.hasPreviousPage
+        |> with Schema.Object.PageInfo.startCursor
         |> with Schema.Object.PageInfo.endCursor
 
 
@@ -160,22 +220,71 @@ type alias Model =
     , url : Url.Url
     , gridData : GridData
     , serverUrl : String
+    , lastPagination : Direction
     }
 
 
-loadGrid : String -> Cmd Msg
-loadGrid serverUrl =
-    gridQuery
+loadGrid : Maybe PageInfo -> Direction -> String -> Cmd Msg
+loadGrid info direction serverUrl =
+    gridQuery info direction
         |> Graphql.Http.queryRequest serverUrl
         |> Graphql.Http.send GridLoaded
 
 
-gridQuery : SelectionSet (Maybe GridDataResponse) RootQuery
-gridQuery =
-    Schema.Query.persons identity gridDataResponse
+type Direction
+    = Initial
+    | Left
+    | Right
+
+
+gridQuery : Maybe PageInfo -> Direction -> SelectionSet (Maybe GridDataResponse) RootQuery
+gridQuery info direction =
+    Schema.Query.persons (getQueryParams info direction) gridDataResponse
+
+
+getQueryParams : Maybe PageInfo -> Direction -> Schema.Query.PersonsOptionalArguments -> Schema.Query.PersonsOptionalArguments
+getQueryParams maybeInfo direction arguments =
+    case maybeInfo of
+        Nothing ->
+            { arguments
+                | first = Graphql.OptionalArgument.Present 4
+            }
+
+        Just info ->
+            case direction of
+                Initial ->
+                    { arguments
+                        | first = Graphql.OptionalArgument.Present 4
+                    }
+
+                Left ->
+                    { arguments
+                        | last = Graphql.OptionalArgument.Present 4
+                        , before =
+                            case info.startCursor of
+                                Just c ->
+                                    Graphql.OptionalArgument.Present c
+
+                                Nothing ->
+                                    Graphql.OptionalArgument.Absent
+                    }
+
+                Right ->
+                    { arguments
+                        | first = Graphql.OptionalArgument.Present 4
+                        , after =
+                            case info.endCursor of
+                                Just c ->
+                                    Graphql.OptionalArgument.Present c
+
+                                Nothing ->
+                                    Graphql.OptionalArgument.Absent
+                    }
 
 
 type Msg
     = GridLoaded (Result (Graphql.Http.Error (Maybe GridDataResponse)) (Maybe GridDataResponse))
     | UrlRequested
     | UrlChanged
+    | PreviousPage
+    | NextPage
