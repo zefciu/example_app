@@ -1,0 +1,1 @@
+./frontend/node_modules/.bin/elm-graphql http://127.0.0.1:8000/graphql --base Schema --output frontend/src

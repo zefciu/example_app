@@ -1,3 +1,6 @@
 *.swp
 *.egg-info
 __pycache__
+frontend/elm-stuff/
+frontend/node_modules/
+frontend/src/Schema/

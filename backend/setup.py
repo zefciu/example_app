@@ -8,6 +8,7 @@ setup(
         'Flask==1.1.1',
         'flask-cors-3.0.8',
         'flask-graphql==2.0.0',
+        'flask-mako==0.4',
         'graphene==2.1.7',
         'graphene-sqlalchemy==2.2.1',
         'psycopg2==2.8.3',

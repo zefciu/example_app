@@ -1,0 +1,5 @@
+---
+db_connection: postgresql+psycopg2:///example_app
+backend_app: http://127.0.0.1:5000/
+frontend_app: http://127.0.0.1:8000/
+js_location: http://127.0.0.1:8000/elm.js

@@ -22,7 +22,7 @@ Base.query = db_session.query_property()
 class Person(Base):
     __tablename__ = 'persons'
     id = sa.Column(sa.Integer, primary_key=True)
-    email = sa.Column(sa.String(128))
-    first_name = sa.Column(sa.String(128))
-    last_name = sa.Column(sa.String(128))
-    avatar = sa.Column(sa.String(256))
+    email = sa.Column(sa.String(128), nullable=False)
+    first_name = sa.Column(sa.String(128), nullable=False)
+    last_name = sa.Column(sa.String(128), nullable=False)
+    avatar = sa.Column(sa.String(256), nullable=False)
