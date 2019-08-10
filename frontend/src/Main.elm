@@ -11,6 +11,7 @@ import Graphql.Operation exposing (RootQuery)
 import Graphql.OptionalArgument
 import Graphql.SelectionSet exposing (SelectionSet, nonNullElementsOrFail, with)
 import Html
+import Html.Attributes
 import List
 import Schema.Object
 import Schema.Object.PageInfo
@@ -27,7 +28,7 @@ main =
         , update = update
         , view = view
         , subscriptions = \_ -> Sub.none
-        , onUrlRequest = \_ -> UrlRequested
+        , onUrlRequest = UrlRequested
         , onUrlChange = \_ -> UrlChanged
         }
 
@@ -47,8 +48,13 @@ init serverUrl url key =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        UrlRequested ->
-            ( model, Cmd.none )
+        UrlRequested request ->
+            case request of
+                Browser.External href ->
+                    ( model, Nav.load href )
+
+                Browser.Internal href ->
+                    ( model, Cmd.none )
 
         UrlChanged ->
             ( model, Cmd.none )
@@ -118,20 +124,34 @@ viewGrid : GridDataResponse -> Html.Html msg
 viewGrid data =
     Table.simpleTable
         ( Table.simpleThead
-            [ Table.th [] [ Html.text "First name" ]
-            , Table.th [] [ Html.text "Second name" ]
+            [ Table.th [] [ Html.text "Avatar" ]
+            , Table.th [] [ Html.text "E-mail" ]
+            , Table.th [] [ Html.text "Imię" ]
+            , Table.th [] [ Html.text "Nazwisko" ]
             ]
         , Table.tbody []
             (List.map
                 (\row ->
                     Table.tr []
-                        [ Table.td [] [ Html.text row.firstName ]
+                        [ Table.td [] [ getAvatar row.avatar ]
+                        , Table.td [] [ getEmailLink row.email ]
+                        , Table.td [] [ Html.text row.firstName ]
                         , Table.td [] [ Html.text row.lastName ]
                         ]
                 )
                 data.persons
             )
         )
+
+
+getAvatar : String -> Html.Html msg
+getAvatar url =
+    Html.img [ Html.Attributes.src url ] []
+
+
+getEmailLink : String -> Html.Html msg
+getEmailLink url =
+    Html.a [ Html.Attributes.href ("mailto:" ++ url) ] [ Html.text url ]
 
 
 viewNavigation : Model -> List (Html.Html Msg)
@@ -205,6 +225,8 @@ pageInfo =
 type alias PersonSummary =
     { firstName : String
     , lastName : String
+    , email : String
+    , avatar : String
     }
 
 
@@ -213,6 +235,8 @@ personSummary =
     Graphql.SelectionSet.succeed PersonSummary
         |> with Schema.Object.Person.firstName
         |> with Schema.Object.Person.lastName
+        |> with Schema.Object.Person.email
+        |> with Schema.Object.Person.avatar
 
 
 type alias Model =
@@ -284,7 +308,7 @@ getQueryParams maybeInfo direction arguments =
 
 type Msg
     = GridLoaded (Result (Graphql.Http.Error (Maybe GridDataResponse)) (Maybe GridDataResponse))
-    | UrlRequested
+    | UrlRequested Browser.UrlRequest
     | UrlChanged
     | PreviousPage
     | NextPage
