@@ -50,6 +50,7 @@ Run the backend
 -------------------
 
 ::
+
     $ cd ..
     $ bin/runserver
 
@@ -75,6 +76,7 @@ Run the frontend
 --------------------
 
 ::
+
     $ cd frontend
     $ sudo npm install -g elm
     $ sudo npm install -g elm-live
