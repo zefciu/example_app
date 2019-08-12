@@ -55,7 +55,7 @@ Run the backend
     $ bin/runserver
 
 You can now navigate to `http://127.0.0.1:5000/graphql` to with a browser or a
-client like Graphiql to navigate the API
+client like Graphiql to browse the API
 
 
 Generate the Schema
