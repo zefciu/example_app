@@ -5,6 +5,7 @@ setup(
     version='0.0.1',
     packages=['example_app'],
     install_requires=[
+        'alembic==1.0.11',
         'Flask==1.1.1',
         'flask-cors==3.0.8',
         'flask-graphql==2.0.0',
