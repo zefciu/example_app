@@ -11,21 +11,21 @@ Installation
 Download and install the project
 -----------------------
 
-Clone the project:
+Clone the project::
 
     $ git clone https://github.com/zefciu/example_app.git
 
-Create the virtualenv for the project:
+Create the virtualenv for the project::
 
     $ virtualenv --python=/usr/bin/python3.6 .virtualenv
     $ . .virtualenv/bin/activate
 
-Install the backend
+Install the backend::
     
     $ cd backend
     $ pip install -e .
 
-Run the test suite
+Run the test suite::
     
     $ python setup.py test
 
@@ -33,22 +33,23 @@ Run the test suite
 Create database
 -----------------
 
-Create a database for your project. E.g. when using PostgreSQL:
+Create a database for your project. E.g. when using PostgreSQL::
     
     # CREATE DATABASE example_app WITH OWNER your_username;
 
 Migrate the database. Ensure that `config.yaml` points to an existing database.
-Then call:
+Then call::
 
     $ alembic upgrade head
 
-Download the data
+Download the data::
 
     $ example_app_sync
 
 Run the backend
 -------------------
 
+::
     $ cd ..
     $ bin/runserver
 
@@ -59,7 +60,7 @@ client like Graphiql to navigate the API
 Generate the Schema
 ------------------------
 
-Without stopping the server, open another console and call:
+Without stopping the server, open another console and call::
 
     $ cd frontend
     $ npm install
@@ -73,6 +74,7 @@ based on your graphql.
 Run the frontend
 --------------------
 
+::
     $ cd frontend
     $ sudo npm install -g elm
     $ sudo npm install -g elm-live
