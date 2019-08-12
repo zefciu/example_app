@@ -19,6 +19,7 @@ setup(
     tests_require=[
         'nose==1.3.7',
     ],
+    test_suite='nose.collector',
     entry_points={
         'console_scripts': [
             'example_app_sync=example_app.sync:main',
