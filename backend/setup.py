@@ -16,6 +16,9 @@ setup(
         'requests==2.22.0',
         'SQLAlchemy==1.3.6',
     ],
+    tests_require=[
+        'nose==1.3.7',
+    ],
     entry_points={
         'console_scripts': [
             'example_app_sync=example_app.sync:main',
