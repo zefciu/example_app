@@ -13,7 +13,7 @@ setup(
         'graphene==2.1.7',
         'graphene-sqlalchemy==2.2.1',
         'psycopg2==2.8.3',
-        'PyYAML==5.1.2',
+        'PyYAML==5.4',
         'requests==2.22.0',
         'SQLAlchemy==1.3.6',
     ],
